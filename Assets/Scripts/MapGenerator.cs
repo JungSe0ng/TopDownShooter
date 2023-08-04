@@ -6,13 +6,16 @@ public class MapGenerator : MonoBehaviour
 {
     public Transform tilePrefab;
     public Transform obastaclePrefab;
+    public Transform navmeshFloor;
     public Vector2 mapSize;
+    public Vector2 maxMapSize;
 
     [Range(0, 1)]
     public float outlinePercent;
     [Range(0, 1)]
     public float obstaclePercent;
 
+    public float tileSize;
 
     List<Coord> allTileCoords;
     Queue<Coord> shuffledTileCoords;
@@ -38,9 +41,9 @@ public class MapGenerator : MonoBehaviour
         shuffledTileCoords = new Queue<Coord> (Utility.ShuffleArray(allTileCoords.ToArray(),seed));
         mapCenter = new Coord((int)mapSize.x / 2, (int)mapSize.y / 2);  
         string holderName = "Generated Map";
-        if (transform.FindChild(holderName))
+        if (transform.Find(holderName))
         {
-            DestroyImmediate(transform.FindChild(holderName).gameObject);
+            DestroyImmediate(transform.Find(holderName).gameObject);
         }
 
         Transform mapHolder = new GameObject(holderName).transform;
@@ -50,9 +53,9 @@ public class MapGenerator : MonoBehaviour
         {
             for (int y = 0; y < mapSize.y; y++)
             {
-                Vector3 tilePosition = new Vector3(-mapSize.x / 2 + 0.5f + x, 0, -mapSize.y / 2 + 0.5f + y);
+                Vector3 tilePosition = CoordToPosition(x, y);
                 Transform newTile = Instantiate(tilePrefab, tilePosition, Quaternion.Euler(Vector3.right * 90f));
-                newTile.localScale = Vector3.one * (1 - outlinePercent);
+                newTile.localScale = Vector3.one * (1 - outlinePercent) *tileSize;
                 newTile.parent = mapHolder;
             }
         }
@@ -73,6 +76,7 @@ public class MapGenerator : MonoBehaviour
 
                 Transform newObastacle = Instantiate(obastaclePrefab, obstaclePosition + Vector3.up * 0.5f, Quaternion.identity);
                 newObastacle.parent = mapHolder;
+                newObastacle.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
             }
             else
             {
@@ -80,6 +84,8 @@ public class MapGenerator : MonoBehaviour
                 currentObstacleCount--;
             }
         }
+
+        navmeshFloor.localScale = new Vector3(maxMapSize.x, maxMapSize.y) * tileSize;
     }
 
     bool MapIsFullyAccessible(bool[,] obstacleMap, int currentObstacleCount)
@@ -121,7 +127,7 @@ public class MapGenerator : MonoBehaviour
     }
     Vector3 CoordToPosition(int x, int y)
     {
-        return new Vector3(-mapSize.x / 2 + 0.5f + x, 0, -mapSize.y / 2 + 0.5f + y);
+        return new Vector3(-mapSize.x / 2 + 0.5f + x, 0, -mapSize.y / 2 + 0.5f + y) * tileSize;
     }
     public Coord GetRandomCoord()
     {
